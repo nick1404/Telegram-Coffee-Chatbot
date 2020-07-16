@@ -152,6 +152,9 @@ def go_back_to_main(msg):
     
     bot.send_message(msg.chat.id, 'Вы вернулись в главное меню. Выберите что вы хотели бы заказать.', reply_markup=keyboard)
 
-
-
+# Add Basket
+@bot.message_handler(regexp='Корзина')
+def show_order_basket(msg):
+    basket = db.list_order(user_id=msg.chat.id)
+    bot.send_message(msg.chat.id, basket)
 bot.polling(none_stop=True)
