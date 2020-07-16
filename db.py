@@ -5,7 +5,7 @@ import pandas as pd
 def ensure_connection(func):
     
     def inner(*args, **kwargs):
-        with sqlite3.connect('/Users/nickmisiiuk/Library/Mobile Documents/com~apple~CloudDocs/работа/chatbot/orders.db') as conn:
+        with sqlite3.connect('orders.db') as conn:
             kwargs['conn'] = conn
             res = func(*args, **kwargs)
         return res
@@ -61,7 +61,7 @@ def list_order(conn, user_id):
     return results_list
 
 # Now transform the Excel price list into a table in the database
-conn = sqlite3.connect('/Users/nickmisiiuk/Library/Mobile Documents/com~apple~CloudDocs/работа/chatbot/orders.db')
+conn = sqlite3.connect('orders.db')
 c = conn.cursor()
 prices = pd.read_excel('prices.xlsx', header=0)
 prices.to_sql('prices', conn, if_exists='replace', index=False)
