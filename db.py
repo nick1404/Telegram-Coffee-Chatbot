@@ -15,8 +15,8 @@ def ensure_connection(func):
 @ensure_connection
 def init_db(conn, force=False): # Create individual tables for each user?
     
-    ''' Check that the required tables exist, else create themё
-    :param force: Create tables again'''
+    ''' Check that the required tables exist, else create them'''
+    ''':param force: Create tables again'''
     cursor = conn.cursor()
     if force:
         cursor.execute('DROP TABLE IF EXISTS order_basket')
@@ -61,7 +61,7 @@ def list_order(conn, user_id):
         res_list.append(tup)
         yield res_list[count]
     
-# Now transform the Excel price list into a table in the database
+# # Now transform the Excel price list into a table in the database
 # conn = sqlite3.connect('orders.db')
 # c = conn.cursor()
 # prices = pd.read_excel('prices.xlsx', header=0)
@@ -73,11 +73,11 @@ def access_price_list(conn, name):
     '''Access a required position in the price list'''
     cursor = conn.cursor()
     cursor.execute('SELECT name, price FROM prices WHERE name = ?', (name, ))    
-    (name, price) = cursor.fetchone()
-    return name, price
+    tup = cursor.fetchone()
+    return tup # Returns a tuple of (name, price) type
+    
 
 '''Need this code to get all lists in the generator object
    returned by list_order()'''
-for lst in list_order(user_id=1488):
-    print(lst)
-
+# for lst in list_order(user_id=1488):
+#     print(lst)
