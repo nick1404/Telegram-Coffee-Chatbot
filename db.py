@@ -15,8 +15,8 @@ def ensure_connection(func):
 @ensure_connection
 def init_db(conn, force=False): # Create individual tables for each user?
     
-    ''' Check that the required tables exist, else create themё
-    :param force: Create tables again'''
+    ''' Check that the required tables exist, else create them'''
+    ''':param force: Create tables again'''
     cursor = conn.cursor()
     if force:
         cursor.execute('DROP TABLE IF EXISTS order_basket')
@@ -51,26 +51,33 @@ def add_order(conn, user_id, name, quantity, price):
 def list_order(conn, user_id):
     '''List the basket to the user'''
     cursor = conn.cursor()
-    cursor.execute('SELECT name FROM order_basket WHERE user_id = ?', (user_id, ))
-    results_tuples = cursor.fetchall()
-    # Unpack a list of tuples and append to a new list of strings
-    results_list = []
-    for res in results_tuples:
-        res_untuple = ''.join(res)
-        results_list.append(res_untuple)
-    return results_list
-
-# Now transform the Excel price list into a table in the database
-conn = sqlite3.connect('orders.db')
-c = conn.cursor()
-prices = pd.read_excel('prices.xlsx', header=0)
-prices.to_sql('prices', conn, if_exists='replace', index=False)
-conn.commit()
+    cursor.execute('SELECT name, SUM(price) FROM order_basket WHERE user_id = ? GROUP BY price', (user_id, ))
+    list_of_tuples = cursor.fetchall()
+    
+    # Unpack a list of tuples and add each tuple into a list
+    res_list = []
+    for count, tup in enumerate(list_of_tuples):
+        tup = list(tup)
+        res_list.append(tup)
+        yield res_list[count]
+    
+# # Now transform the Excel price list into a table in the database
+# conn = sqlite3.connect('orders.db')
+# c = conn.cursor()
+# prices = pd.read_excel('prices.xlsx', header=0)
+# prices.to_sql('prices', conn, if_exists='replace', index=False)
+# conn.commit()
 
 @ensure_connection
 def access_price_list(conn, name):
     '''Access a required position in the price list'''
     cursor = conn.cursor()
     cursor.execute('SELECT name, price FROM prices WHERE name = ?', (name, ))    
-    (name, price) = cursor.fetchone()
-    return name, price
+    tup = cursor.fetchone()
+    return tup # Returns a tuple of (name, price) type
+    
+
+'''Need this code to get all lists in the generator object
+   returned by list_order()'''
+# for lst in list_order(user_id=1488):
+#     print(lst)
