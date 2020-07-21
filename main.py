@@ -1,12 +1,12 @@
 import telebot
-import db
+import db_mysql
 
 # Initiate the bot
 token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
 bot = telebot.TeleBot(token=token)
 
 #Connect to the database
-db.init_db()
+db_mysql.init_db()
 
 @bot.message_handler(commands=['start'])
 def main_menu(msg):
@@ -60,12 +60,12 @@ def coffee_purchase(msg):
     keyboard.add(main, basket, delete, add)
     
     # Access the name and price of the good in the DB
-    name_price = db.access_price_list(name=msg.text)
+    name_price = db_mysql.access_price_list(name=msg.text)
     
     bot.send_message(msg.chat.id, 'Вы выбрали кофе {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
     
     # Add order to the database
-    db.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
+    db_mysql.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
 
 # @bot.callback_query_handler(func=lambda call: True)
 # def callback_query(call):
@@ -74,7 +74,7 @@ milk_dict = {
     'sel':'Селянское (900гр, 2,5%) - 285 грн/ящик',
     'bar':'Бариста ТМ Галичина (1л, 2,5%) - 252 грн/ящик',
     'nez':'Нежинское (1л, 2,5%) - 252 грн/ящик',
-    'alpro':'Молоко безлактозное Alpro 90 грн/л',
+    'alpro':'Молоко безлактозное Alpro - 90 грн/л',
     'main':'Главное Меню'
 }
 
@@ -88,23 +88,25 @@ def choose_milk(msg):
     bot.send_message(msg.chat.id, 'Вы можете заказать нужное вам молоко нажав на кнопки внизу.', reply_markup=keyboard)
 
 
-# milk_regex = 'Галичина\s\(900гр,\s2,5\%\)\s-\s285\sгрн/ящик|Селянское\s\(900гр,\s2,5\%\)\s-\s285\sгрн/ящик|Бариста\sТМ\sГаличина\s\(1л,\s2,5\%\)\s-\s252\sгрн/ящик|Нежинское\s\(1л,\s2,5%\)\s-\s252\sгрн/ящик|Молоко\sбезлактозное\sAlpro\s90\sгрн/л)'
+# milk_regex = 'Галичина\s\(900гр,\s2,5\%\)\s-\s285\sгрн\/ящик|Селянское\s\(900гр,\s2,5\%\)\s-\s285\sгрн\/ящик|Бариста\sТМ\sГаличина\s\(1л,\s2,5\%\)\s-\s252\sгрн\/ящик|Нежинское\s\(1л,\s2,5%\)\s-\s252\sгрн\/ящик|Молоко\sбезлактозное\sAlpro\s90\sгрн/\л)'
+milk_regex = 'Галичина \(900гр, 2,5\%\) - 285 грн\/ящик|Селянское \(900гр, 2,5\%\) - 285 грн\/ящик|Бариста ТМ Галичина \(1л, 2,5\%\) - 252 грн\/ящик|Нежинское \(1л, 2,5%\) - 252 грн\/ящик|Молоко безлактозное Alpro 90 грн/\л'
 
-# @bot.message_handler(regexp=milk_regex)
-# def milk_purchase(msg):
-#     msg_text = msg.text.split(' -')[0]
-#     keyboard = telebot.types.ReplyKeyboardMarkup()
-#     buy = telebot.types.KeyboardButton('Купить')
-#     main = telebot.types.KeyboardButton('Главное Меню')
+
+@bot.message_handler(regexp=milk_regex)
+def milk_purchase(msg):
+    msg_text = msg.text.split(' -')[0]
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    buy = telebot.types.KeyboardButton('Купить')
+    main = telebot.types.KeyboardButton('Главное Меню')
     
-#     # Access the name and price of the good in the DB   
-#     name_price = db.access_price_list(name=msg_text)
+    # Access the name and price of the good in the DB   
+    name_price = db_mysql.access_price_list(name=msg.text)
 
-#     keyboard.add(buy, main)
-#     bot.send_message(msg.chat.id, 'Вы выбрали {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
+    keyboard.add(buy, main)
+    bot.send_message(msg.chat.id, 'Вы выбрали {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
 
-#     # Add the order to the DB
-#     db.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
+    # Add the order to the DB
+    db_mysql.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
 
 
 @bot.message_handler(regexp='Доставка')
@@ -137,6 +139,13 @@ others_dict = {
     'i10':'Какао',
     'main':'Главное Меню'
 }
+# Handle Самовывоз
+@bot.message_handler(regexp='Самовывоз')
+def self_deliv(msg):
+    # send our Location
+    (lat, lon) = (50.496662, 30.470756)
+    bot.send_message(msg.chat.id, 'Вы можете посетить наш склад по адресу ул. Марка Вовчка 14, г. Киев:')
+    bot.send_location(msg.chat.id, lat, lon)
 
 @bot.message_handler(regexp='Заказать другие товары для кофейни')
 def other(msg):
@@ -166,7 +175,7 @@ def show_order_basket(msg):
     
     '''Need this code to get all lists in the generator object
    returned by list_order()'''
-    for product in db.list_order(user_id=msg.chat.id):
+    for product in db_mysql.list_order(user_id=msg.chat.id):
         bot.send_message(msg.chat.id, '{} - {} грн.'.format(product[0], product[1]))
     
 bot.polling(none_stop=True)
