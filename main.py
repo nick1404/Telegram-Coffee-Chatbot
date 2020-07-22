@@ -1,9 +1,10 @@
 import telebot
 import db_mysql
+import config
 
 # Initiate the bot
-token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
-bot = telebot.TeleBot(token=token)
+# token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
+bot = telebot.TeleBot(token=config.TOKEN)
 
 #Connect to the database
 db_mysql.init_db(force=True)
