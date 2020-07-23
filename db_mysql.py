@@ -5,12 +5,13 @@ import pymysql
 
 # Create a decorator that connects to the DB and closes the connection once the function is done
 def start_connection():
-    # conn = connection.connect(user='sql7356052', password='XrZadZZzmv',
-    #                           host='sql7.freemysqlhosting.net',
-    #                           database='sql7356052')#, charset='utf8')
+    # For server use:
     conn = connection.connect(user='nick', password='usalud35',
-                              host='mysql-11179-0.cloudclusters.net', port=11179,
+                              host='localhost',
                               database='orders')
+#     conn = connection.connect(user='nick', password='usalud35',
+#                               host='mysql-11179-0.cloudclusters.net', port=11179,
+#                               database='orders')
     cursor = conn.cursor()
     return conn, cursor
     
