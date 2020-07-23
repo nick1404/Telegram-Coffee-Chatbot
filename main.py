@@ -7,7 +7,7 @@ import config
 bot = telebot.TeleBot(token=config.TOKEN)
 
 #Connect to the database
-db_mysql.init_db(force=True)
+db_mysql.init_db()
 
 @bot.message_handler(commands=['start'])
 def main_menu(msg):
