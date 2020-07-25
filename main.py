@@ -4,7 +4,7 @@ import config
 
 # Initiate the bot
 # token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
-bot = telebot.TeleBot(token=config.TOKEN)
+bot = telebot.TeleBot(config.TOKEN)
 
 #Connect to the database
 db_mysql.init_db(force=True)
@@ -121,7 +121,8 @@ def delivery(msg):
 
 
 # Handle user location input
-@bot.message_handler(content_types=['location'])
+@bot.message_handler(regexp="Доставка по адресу")
+# @bot.message_handler(content_types=['location'])
 def handle_location(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     end = telebot.types.KeyboardButton('Закончить Заказ')
@@ -129,7 +130,7 @@ def handle_location(msg):
     keyboard.add(end, main)
     
     # Write user location to the DB
-    db_mysql.write_location(user_id=msg.chat.id, lat=msg.location.latitude, long=msg.location.longitude)
+    # db_mysql.write_location(user_id=msg.chat.id, lat=msg.location.latitude, long=msg.location.longitude)
     bot.send_message(msg.chat.id, 'Ваш адрес был успешно добавлен в нашу систему!', reply_markup=keyboard)
 
 
