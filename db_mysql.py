@@ -6,12 +6,12 @@ import pymysql
 # Create a decorator that connects to the DB and closes the connection once the function is done
 def start_connection():
     # For server use:
+    # conn = connection.connect(user='nick', password='usalud35',
+    #                           host='localhost',
+    #                           database='orders')
     conn = connection.connect(user='nick', password='usalud35',
-                              host='localhost',
+                              host='mysql-11179-0.cloudclusters.net', port=11179,
                               database='orders')
-#     conn = connection.connect(user='nick', password='usalud35',
-#                               host='mysql-11179-0.cloudclusters.net', port=11179,
-#                               database='orders')
     cursor = conn.cursor()
     return conn, cursor
     
@@ -35,7 +35,8 @@ def init_db(force=False):
                         quantity INTEGER NOT NULL,
                         price FLOAT NOT NULL,
                         ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-                        ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci '''
+                        ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci 
+                        '''
                         )
     # Create a table in DB to store user addresses
     cursor.execute('''CREATE TABLE IF NOT EXISTS client_info (
@@ -44,7 +45,6 @@ def init_db(force=False):
                         latitude TEXT,
                         longitude TEXT, 
                         phone_number TEXT,
-                        username TEXT,
                         address TEXT
                         ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci '''
                         )
@@ -85,13 +85,6 @@ def access_price_list(name):
 def write_location(user_id, lat, long):
     conn, cursor = start_connection()
     cursor.execute('INSERT INTO client_info (user_id, latitude, longitude) VALUES (%s, %s, %s)', (user_id, lat, long))
-    conn.commit()
-    stop_connection(conn, cursor)
-    
-    
-def write_username(user_id, username):
-    conn, cursor = start_connection()
-    cursor.execute('INSERT INTO client_info (user_id, username) VALUES (%s, %s)', (user_id, username))
     conn.commit()
     stop_connection(conn, cursor)
 

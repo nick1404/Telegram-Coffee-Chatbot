@@ -7,7 +7,7 @@ import config
 bot = telebot.TeleBot(config.TOKEN)
 
 #Connect to the database
-db_mysql.init_db()
+db_mysql.init_db() # Specify force=True to create fresh tables
 
 @bot.message_handler(commands=['start'])
 def main_menu(msg):
@@ -22,7 +22,7 @@ def main_menu(msg):
 
 coffee_dict = {
     'brasil':'Бразилия Сантос (250 грн - 1 кг)', 
-    'ef':'Эфиопия (250 грн - 1 кг)', 
+    'ef':'Эфиопия (250 грн - 1 кг)',
     'col':'Колумбия Супремо (300 грн - 1 кг)',
     'gond':'Гондурас (300 грн - 1 кг)',
     'sal':'Сальвадор (300 грн - 1 кг)',
@@ -34,7 +34,7 @@ coffee_dict = {
     'main':'Главное Меню'
     }
 
-@bot.message_handler(regexp='Заказать кофе')
+@bot.message_handler(regexp='Заказать Кофе')
 def choose_coffee(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     for key, value in coffee_dict.items():
@@ -45,9 +45,9 @@ def choose_coffee(msg):
 
 
 # Loop through coffee dict to handle the buttons for each coffee
-coffee_regex = "Бразилия Сантос \(250 грн - 1 кг\)|Эфиопия \(250 грн - 1кг\)|Колумбия Супремо \(300 грн - 1 кг\)|Гондурас \(300 грн - 1 кг\)|Сальвадор \(300 грн - 1 кг\)|Гватемала \(300 грн - 1 кг\)|70 арабики \+ 30 рабусты \(220 грн - 1 кг\)|50 арабики + 50 рабусты \(200 грн - 1 кг\)|30 арабики + 70 рабусты \(180 грн - 1 кг\)|Бурунди \(350 грн - 1 кг\)"
+coffee_regex = "Бразилия Сантос \(250 грн - 1 кг\)|Эфиопия \(250 грн - 1 кг\)|Колумбия Супремо \(300 грн - 1 кг\)|Гондурас \(300 грн - 1 кг\)|Сальвадор \(300 грн - 1 кг\)|Гватемала \(300 грн - 1 кг\)|70 арабики \+ 30 рабусты \(220 грн - 1 кг\)|50 арабики \+ 50 рабусты \(200 грн - 1 кг\)|30 арабики \+ 70 рабусты \(185 грн - 1 кг\)|Бурунди \(350 грн - 1 кг\)" # pylint: disable=anomalous-backslash-in-string
 # coffee_regex = 'Бразилия\sСантос\s\(250\sгрн\s-\s1\sкг\)|Эфиопия\s\(250\sгрн\s-\s1\sкг\)|Колумбия\sСупремо\s\(300\sгрн\s-\s1\sкг\)|Гондурас\s\(300\sгрн\s-\s1\sкг\)|Сальвадор\s\(300\sгрн\s-\s1\sкг\)|Гватемала\s\(300\sгрн\s-\s1\sкг\)|70\sарабики\s\+\s30\sрабусты\s\(220\sгрн\s-\s1\sкг\)|50\sарабики\s\+\s50\sрабусты\s\(200\sгрн\s-\s1\sкг\)|30\sарабики\s\+\s70\sрабусты\s\(180\sгрн\s-\s1\sкг\)|Бурунди\s\(350\sгрн\s-\s1\sкг\)'
-                                                       
+                
 @bot.message_handler(regexp=coffee_regex)
 def coffee_purchase(msg):
     msg_text = msg.text.split(' (')[0]
@@ -62,7 +62,7 @@ def coffee_purchase(msg):
     # Access the name and price of the good in the DB
     name_price = db_mysql.access_price_list(name=msg.text)
     
-    bot.send_message(msg.chat.id, 'Вы выбрали кофе {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
+    bot.send_message(msg.chat.id, 'Вы выбрали Кофе {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
     
     # Add order to the database
     db_mysql.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
@@ -73,7 +73,7 @@ milk_dict = {
     'sel':'Селянское (900гр, 2,5%) - 285 грн/ящик',
     'bar':'Бариста ТМ Галичина (1л, 2,5%) - 252 грн/ящик',
     'nez':'Нежинское (1л, 2,5%) - 252 грн/ящик',
-    'alpro':'Молоко безлактозное Alpro - 90 грн/л',
+    'alpro':'Безлактозное "Alpro" - 90 грн/л',
     'main':'Главное Меню'
 }
 
@@ -88,7 +88,7 @@ def choose_milk(msg):
 
 
 # milk_regex = 'Галичина\s\(900гр,\s2,5\%\)\s-\s285\sгрн\/ящик|Селянское\s\(900гр,\s2,5\%\)\s-\s285\sгрн\/ящик|Бариста\sТМ\sГаличина\s\(1л,\s2,5\%\)\s-\s252\sгрн\/ящик|Нежинское\s\(1л,\s2,5%\)\s-\s252\sгрн\/ящик|Молоко\sбезлактозное\sAlpro\s90\sгрн/\л)'
-milk_regex = 'Галичина \(900гр, 2,5\%\) - 285 грн\/ящик|Селянское \(900гр, 2,5\%\) - 285 грн\/ящик|Бариста ТМ Галичина \(1л, 2,5\%\) - 252 грн\/ящик|Нежинское \(1л, 2,5%\) - 252 грн\/ящик|Молоко безлактозное Alpro 90 грн/\л'
+milk_regex = 'Галичина \(900гр, 2,5\%\) - 285 грн\/ящик|Селянское \(900гр, 2,5\%\) - 285 грн\/ящик|Бариста ТМ Галичина \(1л, 2,5\%\) - 252 грн\/ящик|Нежинское \(1л, 2,5\%\) - 252 грн\/ящик|Безлактозное \"Alpro\" 90 грн\/л' # pylint: disable=anomalous-backslash-in-string
 
 
 @bot.message_handler(regexp=milk_regex)
@@ -102,7 +102,7 @@ def milk_purchase(msg):
     name_price = db_mysql.access_price_list(name=msg.text)
 
     keyboard.add(main, basket)
-    bot.send_message(msg.chat.id, 'Вы выбрали {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
+    bot.send_message(msg.chat.id, 'Вы выбрали Молоко {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
 
     # Add the order to the DB
     db_mysql.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
@@ -125,7 +125,7 @@ def delivery(msg):
 @bot.message_handler(content_types=['location'])
 def handle_location(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
-    end = telebot.types.KeyboardButton('Закончить Заказ')
+    end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
@@ -138,7 +138,7 @@ def handle_location(msg):
 @bot.message_handler(regexp='Самовывоз')
 def self_deliv(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
-    end = telebot.types.KeyboardButton('Закончить Заказ')
+    end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
@@ -146,23 +146,16 @@ def self_deliv(msg):
     (lat, lon) = (50.496662, 30.470756)
     bot.send_message(msg.chat.id, 'Вы можете посетить наш склад по адресу ул. Марка Вовчка 14, г. Киев:', reply_markup=keyboard)
     bot.send_location(msg.chat.id, lat, lon)
-    
-    #Request username
-    username = msg.from_user.username
-    db_mysql.write_username(user_id=msg.chat.id, username=username)
 
 
 @bot.message_handler(regexp="Доставка Новой Почтой")
 def nova_pochta(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
-    end = telebot.types.KeyboardButton('Закончить Заказ')
+    end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
     bot.send_message(msg.chat.id, 'Доставка Новой Почтой за счет покупателя. Наш менеджер свяжется с вами.', reply_markup=keyboard)
-    #Request username
-    username = msg.from_user.username
-    db_mysql.write_username(user_id=msg.chat.id, username=username)
 
 
 others_dict = {
@@ -199,7 +192,7 @@ def go_back_to_main(msg):
     milk = telebot.types.KeyboardButton('Заказать молоко')
     deliv = telebot.types.KeyboardButton('Доставка')
     other = telebot.types.KeyboardButton('Заказать другие товары для кофейни')
-    end = telebot.types.KeyboardButton('Закончить Заказ')
+    end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
     keyboard.add(coffee, milk, deliv, other, end)
     
     bot.send_message(msg.chat.id, 'Вы вернулись в главное меню. Выберите что вы хотели бы заказать.', reply_markup=keyboard)
@@ -208,7 +201,7 @@ def go_back_to_main(msg):
 @bot.message_handler(regexp='Корзина')
 def show_order_basket(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
-    end = telebot.types.KeyboardButton('Закончить Заказ')
+    end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
@@ -217,15 +210,18 @@ def show_order_basket(msg):
     '''Need this code to get all lists in the generator object
    returned by list_order()'''
     for product in db_mysql.list_order(user_id=msg.chat.id):
-        bot.send_message(msg.chat.id, '{} - {} грн. Количетсво: {}'.format(product[0], product[2], product[1]))
+        bot.send_message(msg.chat.id, '{} - {} грн. Количетсво: {}'.format(product[0].split(' (')[0], product[2], product[1]))
 
 
-@bot.message_handler(regexp='Закончить Заказ')
+# End of the order
+@bot.message_handler(content_types=['contact'])
 def end_order(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     main = telebot.types.KeyboardButton('Главное Меню')
-    keyboard.add(end, main)
+    keyboard.add(main)
     
+    # Record phone number into DB
+    db_mysql.write_phone(user_id=msg.chat.id, phone_number=msg.contact.phone_number)
     bot.send_message(msg.chat.id, 'Спасибо за то, что воспользовались нашим ботом. Наш менеджер свяжется с вами через пару минут. До скорых встреч!', reply_markup=keyboard)
     # Add method that deletes orders from the db??
     
