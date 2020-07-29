@@ -1,6 +1,7 @@
 import telebot
 import db_mysql
 import config
+import sys
 
 # Initiate the bot
 # token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
@@ -121,8 +122,8 @@ def delivery(msg):
 
 
 # Handle user location input
-@bot.message_handler(regexp="Доставка по адресу")
-# @bot.message_handler(content_types=['location'])
+# @bot.message_handler(regexp="Доставка по адресу")
+@bot.message_handler(content_types=['location'])
 def handle_location(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     end = telebot.types.KeyboardButton('Закончить Заказ')
@@ -130,7 +131,7 @@ def handle_location(msg):
     keyboard.add(end, main)
     
     # Write user location to the DB
-    # db_mysql.write_location(user_id=msg.chat.id, lat=msg.location.latitude, long=msg.location.longitude)
+    db_mysql.write_location(user_id=msg.chat.id, lat=msg.location.latitude, long=msg.location.longitude)
     bot.send_message(msg.chat.id, 'Ваш адрес был успешно добавлен в нашу систему!', reply_markup=keyboard)
 
 
@@ -223,7 +224,7 @@ def show_order_basket(msg):
 @bot.message_handler(regexp='Закончить Заказ')
 def end_order(msg):
     bot.send_message(msg.chat.id, 'Спасибо за то, что воспользовались нашим ботом. Наш менеджер свяжется с вами через пару минут. До скорых встреч!')
-    exit() # Terminate program
+    sys.exit() # Terminate program
     # Add method that deletes orders from the db??
     
     
