@@ -223,8 +223,11 @@ def show_order_basket(msg):
 
 @bot.message_handler(regexp='Закончить Заказ')
 def end_order(msg):
-    bot.send_message(msg.chat.id, 'Спасибо за то, что воспользовались нашим ботом. Наш менеджер свяжется с вами через пару минут. До скорых встреч!')
-    sys.exit() # Terminate program
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    main = telebot.types.KeyboardButton('Главное Меню')
+    keyboard.add(end, main)
+    
+    bot.send_message(msg.chat.id, 'Спасибо за то, что воспользовались нашим ботом. Наш менеджер свяжется с вами через пару минут. До скорых встреч!', reply_markup=keyboard)
     # Add method that deletes orders from the db??
     
     
