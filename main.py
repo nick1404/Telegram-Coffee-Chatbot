@@ -105,34 +105,50 @@ def milk_purchase(msg):
     bot.send_message(msg.chat.id, 'Вы выбрали Молоко {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
 
     # Add the order to the DB
-    db_mysql.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1]) # Add quantity controls
+    db_mysql.add_order(user_id=msg.chat.id, name=name_price[0], quantity=1, price=name_price[1])
 
 
 @bot.message_handler(regexp='Доставка')
 def delivery(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
-    address = telebot.types.KeyboardButton("Доставка по адресу", request_location=True) #Need to store the location somewhere
-    post = telebot.types.KeyboardButton("Доставка Новой Почтой")
+    geo = telebot.types.KeyboardButton("На текущее местоположение", request_location=True)
+    address = telebot.types.KeyboardButton('На другой адрес')
+    post = telebot.types.KeyboardButton("Новой Почтой")
     drive = telebot.types.KeyboardButton('Самовывоз')
     main = telebot.types.KeyboardButton('Главное Меню')
     
-    keyboard.add(address, post, main, drive)
+    keyboard.add(geo, address, post, main, drive)
     bot.send_message(msg.chat.id, 'Вы можете заказать доставку до 9 утра (День в День). Доставка по Киеву от 800 грн бесплатно. Заказ меньше 800 грн оплачивается дополнительно 75 грн. Доставка Новой Почтой за счет покупателя.', reply_markup=keyboard)
 
 
 # Handle user location input
-# @bot.message_handler(regexp="Доставка по адресу")
 @bot.message_handler(content_types=['location'])
-def handle_location(msg):
+def handle_geolocation(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
     # Write user location to the DB
-    db_mysql.write_location(user_id=msg.chat.id, lat=msg.location.latitude, long=msg.location.longitude)
+    db_mysql.write_geolocation(user_id=msg.chat.id, lat=msg.location.latitude, long=msg.location.longitude)
     bot.send_message(msg.chat.id, 'Ваш адрес был успешно добавлен в нашу систему!', reply_markup=keyboard)
 
+
+# Handle user-inputted address
+@bot.message_handler(regexp='На другой адрес')
+def handle_adress(msg):
+    bot.send_message(msg.chat.id, 'Введите адрес для доставки в формате: "УЛИЦА, НОМЕР ДОМА"')
+    
+@bot.message_handler(regexp='.+,?\s?\d+') # Regex for addresses # pylint: disable=anomalous-backslash-in-string
+def accept_adress(msg):
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
+    main = telebot.types.KeyboardButton('Главное Меню')
+    keyboard.add(end, main)
+    
+    # Write user address to DB
+    db_mysql.write_adress(user_id=msg.chat.id, address=msg.text)
+    bot.send_message(msg.chat.id, 'Ваш Адрес был успешно записан!', reply_markup=keyboard)
 
 # Handle Самовывоз
 @bot.message_handler(regexp='Самовывоз')
@@ -148,7 +164,7 @@ def self_deliv(msg):
     bot.send_location(msg.chat.id, lat, lon)
 
 
-@bot.message_handler(regexp="Доставка Новой Почтой")
+@bot.message_handler(regexp="Новой Почтой")
 def nova_pochta(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)

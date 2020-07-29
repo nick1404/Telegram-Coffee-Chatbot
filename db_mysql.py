@@ -82,12 +82,11 @@ def access_price_list(name):
     stop_connection(conn, cursor)
     return tup # Returns a tuple of (name, price) type
 
-def write_location(user_id, lat, long):
+def write_geolocation(user_id, lat, long):
     conn, cursor = start_connection()
     cursor.execute('INSERT INTO client_info (user_id, latitude, longitude) VALUES (%s, %s, %s)', (user_id, lat, long))
     conn.commit()
     stop_connection(conn, cursor)
-
     
 def write_phone(user_id, phone_number):
     conn, cursor = start_connection()
@@ -95,5 +94,11 @@ def write_phone(user_id, phone_number):
     conn.commit()
     stop_connection(conn, cursor)
     
+def write_adress(user_id, address):
+    conn, cursor = start_connection()
+    cursor.execute('INSERT INTO client_info (user_id, address) VALUES (%s, %s)', (user_id, address))
+    conn.commit()
+    stop_connection(conn, cursor)
+
     
 # Function that deletes user's order from DB after pressed "DONE" ??
