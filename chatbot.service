@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram Bot
+After=network.target
+
+[Service]
+User=nick
+Group=nick
+
+WorkingDirectory=/home/nick/chatbot_2/
+Environment="PYTHONPATH=/home/nick/chatbot_2/"
+ExecStart=/home/nick/chatbot_2/.venv/bin/python /home/nick/chatbot_2/main.py
+
+[Install]
+WantedBy=multi-user.target
