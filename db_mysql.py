@@ -44,7 +44,8 @@ def init_db(force=False):
                         latitude TEXT,
                         longitude TEXT, 
                         phone_number TEXT,
-                        username TEXT
+                        username TEXT,
+                        address TEXT
                         ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci '''
                         )
     conn.commit()
@@ -72,18 +73,6 @@ def list_order(user_id):
         yield res_list[count]
     stop_connection(conn, cursor)
 
-# Now transform the Excel price list into a table in the database
-# def excel_connect():
-#     engine = create_engine("mysql+pymysql://sql7356052:XrZadZZzmv@sql7.freemysqlhosting.net:3306/sql7356052?charset=utf8mb4")
-#     # engine = create_engine("mysql+pymysql://sql7356052:XrZadZZzmv@sql7.freemysqlhosting.net:3306/sql7356052", encoding='utf8')
-
-#     # conn = pymysql.connect(user='sql7356052', password='XrZadZZzmv',
-#     #                           host='sql7.freemysqlhosting.net',
-#     #                           database='sql7356052',charset='utf8')
-#     conn = engine.connect()
-#     prices = pd.read_excel('prices.xlsx', header=0)
-#     prices.to_sql('prices', con=conn, if_exists='replace', index=False)
-#     conn.close()
 
 def access_price_list(name):
     '''Access a required position in the price list'''
@@ -99,10 +88,19 @@ def write_location(user_id, lat, long):
     conn.commit()
     stop_connection(conn, cursor)
     
+    
 def write_username(user_id, username):
     conn, cursor = start_connection()
     cursor.execute('INSERT INTO client_info (user_id, username) VALUES (%s, %s)', (user_id, username))
     conn.commit()
     stop_connection(conn, cursor)
 
+    
+def write_phone(user_id, phone_number):
+    conn, cursor = start_connection()
+    cursor.execute('INSERT INTO client_info (user_id, phone_number) VALUES (%s, %s)', (user_id, phone_number))
+    conn.commit()
+    stop_connection(conn, cursor)
+    
+    
 # Function that deletes user's order from DB after pressed "DONE" ??
