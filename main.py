@@ -1,7 +1,6 @@
 import telebot
 import db_mysql
 import config
-import sys
 
 # Initiate the bot
 # token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
