@@ -3,11 +3,10 @@ import db_mysql
 import config
 
 # Initiate the bot
-# token = '1152277849:AAH7nrOn2fqpL0ktVjSVpE9qUk9__M0oPWA'
 bot = telebot.TeleBot(config.TOKEN)
 
 #Connect to the database
-db_mysql.init_db() # Specify force=True to create fresh tables
+db_mysql.init_db(force=True) # Specify force=True to create fresh tables
 
 @bot.message_handler(commands=['start'])
 def main_menu(msg):
@@ -150,6 +149,7 @@ def accept_adress(msg):
     db_mysql.write_adress(user_id=msg.chat.id, address=msg.text)
     bot.send_message(msg.chat.id, 'Ваш Адрес был успешно записан!', reply_markup=keyboard)
 
+
 # Handle Самовывоз
 @bot.message_handler(regexp='Самовывоз')
 def self_deliv(msg):
@@ -235,6 +235,9 @@ def end_order(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(main)
+    
+    # Add pending order to the actual orders table
+    db_mysql.complete_order(user_id=msg.chat.id)
     
     # Record phone number into DB
     db_mysql.write_phone(user_id=msg.chat.id, phone_number=msg.contact.phone_number)
