@@ -6,7 +6,7 @@ import config
 bot = telebot.TeleBot(config.TOKEN)
 
 #Connect to the database
-db_mysql.init_db(force=True) # Specify force=True to create fresh tables
+db_mysql.init_db() # Specify force=True to create fresh tables
 
 @bot.message_handler(commands=['start'])
 def main_menu(msg):
@@ -52,11 +52,11 @@ def coffee_purchase(msg):
     msg_text = msg.text.split(' (')[0]
     
     keyboard = telebot.types.ReplyKeyboardMarkup()
-    # add = telebot.types.KeyboardButton('+')
-    # delete = telebot.types.KeyboardButton('-')
+    add = telebot.types.KeyboardButton('+')
+    delete = telebot.types.KeyboardButton('-')
     main = telebot.types.KeyboardButton('Главное Меню')
     basket = telebot.types.KeyboardButton('Корзина')
-    keyboard.add(main, basket)#, delete, add)
+    keyboard.add(delete, add, main, basket)
     
     # Access the name and price of the good in the DB
     name_price = db_mysql.access_price_list(name=msg.text)
@@ -96,11 +96,13 @@ def milk_purchase(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     main = telebot.types.KeyboardButton('Главное Меню')
     basket = telebot.types.KeyboardButton('Корзина')
+    add = telebot.types.KeyboardButton('+')
+    delete = telebot.types.KeyboardButton('-')
     
     # Access the name and price of the good in the DB   
     name_price = db_mysql.access_price_list(name=msg.text)
 
-    keyboard.add(main, basket)
+    keyboard.add(delete, add, main, basket)
     bot.send_message(msg.chat.id, 'Вы выбрали Молоко {}. Вы можете изменить количество с помощью кнопок + и -.'.format(msg_text), reply_markup=keyboard)
 
     # Add the order to the DB
@@ -200,6 +202,41 @@ def other(msg):
     bot.send_message(msg.chat.id, 'У нас в наличии есть широкий ассортимент товаров для вашей кофейни. Выберите нужное из списка внизу.', reply_markup=keyboard)
 
 
+# Handle adding one more of the product
+@bot.message_handler(regexp='\+')
+def added(msg):
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    main = telebot.types.KeyboardButton('Главное Меню')
+    basket = telebot.types.KeyboardButton('Корзина')
+    add = telebot.types.KeyboardButton('+')
+    delete = telebot.types.KeyboardButton('-')
+    keyboard.add(delete, add, main, basket)
+    
+    # Record to the DB
+    db_mysql.add_one(user_id=msg.chat.id)
+    tup = db_mysql.select_last(user_id=msg.chat.id) # Tuple (name, quantity, total)
+    bot.send_message(msg.chat.id, 'Вы измененили кол-во товара: {} - {} грн. Количество: {}'.format(tup[0], tup[2], tup[1]), reply_markup=keyboard)
+    
+
+# Handle deleting one of the last product
+@bot.message_handler(regexp='-')
+def deleted(msg):
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    main = telebot.types.KeyboardButton('Главное Меню')
+    basket = telebot.types.KeyboardButton('Корзина')
+    add = telebot.types.KeyboardButton('+')
+    delete = telebot.types.KeyboardButton('-')
+    keyboard.add(delete, add, main, basket)
+    
+    # Record to the DB
+    db_mysql.delete_one(user_id=msg.chat.id)
+    tup = db_mysql.select_last(user_id=msg.chat.id) # Tuple (name, quantity, total)
+    if tup[1] == 0:
+        bot.send_message(msg.chat.id,'Товар был удален из вашего заказа.', reply_markup=keyboard)
+    else:
+        bot.send_message(msg.chat.id, 'Вы измененили кол-во товара: {} - {} грн. Количество: {}'.format(tup[0], tup[2], tup[1]), reply_markup=keyboard)    
+        
+        
 # Handle going back to main menu
 @bot.message_handler(regexp='Главное Меню')
 def go_back_to_main(msg):
@@ -221,13 +258,20 @@ def show_order_basket(msg):
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
-    bot.send_message(msg.chat.id, 'Ваш Заказ:', reply_markup=keyboard)
+    # Handle if the basket is empty -- NOT WORKING YET
+    if not db_mysql.list_order(user_id=msg.chat.id):
+        bot.send_message(msg.chat.id, 'Ваша Корзина пустая!', reply_markup=keyboard)
+    else:
+        bot.send_message(msg.chat.id, 'Ваш Заказ:', reply_markup=keyboard)
     
-    '''Need this code to get all lists in the generator object
-   returned by list_order()'''
-    for product in db_mysql.list_order(user_id=msg.chat.id):
-        bot.send_message(msg.chat.id, '{} - {} грн. Количетсво: {}'.format(product[0].split(' (')[0], product[2], product[1]))
-
+        '''Need this code to get all lists in the generator object
+        returned by list_order()'''
+        for product in db_mysql.list_order(user_id=msg.chat.id):
+            bot.send_message(msg.chat.id, '{} - {} грн. Количество: {}'.format(product[0].split(' (')[0], product[2], product[1]))
+            
+        # Count the total sum for all products in the basket
+        total_sum = db_mysql.count_total(user_id=msg.chat.id)
+        bot.send_message(msg.chat.id, 'Сумма вашего заказа: {} грн.'.format(total_sum[0]))
 
 # End of the order
 @bot.message_handler(content_types=['contact'])

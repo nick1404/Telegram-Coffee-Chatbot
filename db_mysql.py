@@ -6,12 +6,12 @@ import pymysql
 # Create a decorator that connects to the DB and closes the connection once the function is done
 def start_connection():
     # For server use:
-    # conn = connection.connect(user='nick', password='usalud35',
-    #                           host='localhost',
-    #                           database='orders')
     conn = connection.connect(user='nick', password='usalud35',
-                              host='mysql-11179-0.cloudclusters.net', port=11179,
+                              host='localhost',
                               database='orders')
+    # conn = connection.connect(user='nick', password='usalud35',
+    #                           host='mysql-11179-0.cloudclusters.net', port=11179,
+    #                           database='orders')
     cursor = conn.cursor()
     return conn, cursor
     
@@ -30,10 +30,12 @@ def init_db(force=False):
     
     # Create a table in DB to store a user's order basket
     cursor.execute('''CREATE TABLE IF NOT EXISTS order_basket (
+                        id INTEGER AUTO_INCREMENT PRIMARY KEY,
                         user_id INTEGER NOT NULL,
                         name TEXT NOT NULL,
                         quantity INTEGER NOT NULL,
                         price FLOAT NOT NULL,
+                        total FLOAT,
                         ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                         ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci 
                         '''
@@ -51,10 +53,12 @@ def init_db(force=False):
     
     # Create a table for pending orders
     cursor.execute('''CREATE TABLE IF NOT EXISTS pending_orders (
+                        id INTEGER AUTO_INCREMENT PRIMARY KEY,
                         user_id INTEGER NOT NULL,
                         name TEXT NOT NULL,
                         quantity INTEGER NOT NULL,
                         price FLOAT NOT NULL,
+                        total FLOAT,
                         ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                         ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci 
                         '''
@@ -73,7 +77,8 @@ def add_order(user_id, name, quantity, price):
 def list_order(user_id):
     '''List the basket to the user'''
     conn, cursor = start_connection()
-    cursor.execute('SELECT name, SUM(quantity), SUM(price) FROM pending_orders WHERE user_id = %s GROUP BY price, name, quantity', (user_id, ))
+    cursor.execute('UPDATE pending_orders SET total = quantity * price WHERE user_id = %s ', (user_id, ))
+    cursor.execute('SELECT name, quantity, total FROM pending_orders WHERE user_id = %s', (user_id, ))
     list_of_tuples = cursor.fetchall()
     
     # Unpack a list of tuples and add each tuple into a list
@@ -111,12 +116,59 @@ def write_adress(user_id, address):
     conn.commit()
     stop_connection(conn, cursor)
 
+
 def complete_order(user_id):
     '''Add pending order to the real order (once the "End Order" button is pressed by the user)'''
     conn, cursor = start_connection()
-    cursor.execute('INSERT INTO order_basket SELECT * FROM pending_orders WHERE user_id = %s', (user_id, ))
-    cursor.execute('DELETE FROM pending_orders WHERE user_id = %s', (user_id, ))
+    cursor.execute('''INSERT INTO order_basket (user_id, name, quantity, price, total, ts)
+                      SELECT user_id, name, quantity, price, total, ts FROM pending_orders WHERE user_id = %s''', (user_id, ))
+    
+    cursor.execute('UPDATE order_basket SET total = quantity * price WHERE user_id = %s ', (user_id, ))
+    cursor.execute('DELETE FROM pending_orders WHERE user_id = %s', (user_id, )) # Delete rows from pending table
     conn.commit()
     stop_connection(conn, cursor)
+
+
+def add_one(user_id):
+    ''' Add one more quantity of the last good in the "pending" table'''
+    conn, cursor = start_connection()
+    cursor.execute('''UPDATE pending_orders SET quantity = quantity + 1, 
+                                                total = quantity * price
+                                                WHERE user_id = %s 
+                                                order by id desc limit 1''', (user_id, ))
+    conn.commit()
+    stop_connection(conn, cursor)
+    
+def delete_one(user_id):
+    ''' Delete one quantity of the last good in the "pending" table'''
+    conn, cursor = start_connection()
+    cursor.execute('''UPDATE pending_orders SET quantity = quantity - 1, 
+                                                total = quantity * price
+                                                WHERE user_id = %s 
+                                                order by id desc limit 1''', (user_id, ))
+    # cursor.execute('''DELETE FROM pending_orders WHERE quantity = 0''')
+    conn.commit()
+    stop_connection(conn, cursor) 
+    
+    
+def select_last(user_id):
+    '''Returns (name, quantity, total) of the last added product by the user'''
+    conn, cursor = start_connection()
+    cursor.execute('SELECT name, quantity, total FROM pending_orders WHERE user_id = %s ORDER BY id DESC LIMIT 1', (user_id, ))
+    tup = cursor.fetchone()
+    cursor.execute('DELETE FROM pending_orders WHERE quantity = 0')
+    conn.commit()
+    stop_connection(conn, cursor)
+    return tup
+
+
+def count_total(user_id):
+    '''Count and return the total sum fopr all goods in the basket.'''
+    conn, cursor = start_connection()
+    cursor.execute('UPDATE pending_orders SET total = quantity * price WHERE user_id = %s ', (user_id, ))
+    cursor.execute('SELECT SUM(total) FROM pending_orders WHERE user_id = %s', (user_id, ))
+    total = cursor.fetchone()
+    stop_connection(conn, cursor)
+    return total
 
 # Function that deletes user's order from DB after pressed "DONE" ??
