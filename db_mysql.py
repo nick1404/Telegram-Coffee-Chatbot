@@ -32,6 +32,7 @@ def init_db(force=False):
     cursor.execute('''CREATE TABLE IF NOT EXISTS order_basket (
                         id INTEGER AUTO_INCREMENT PRIMARY KEY,
                         user_id INTEGER NOT NULL,
+                        phone_number TEXT,
                         name TEXT NOT NULL,
                         quantity INTEGER NOT NULL,
                         price FLOAT NOT NULL,
@@ -44,9 +45,9 @@ def init_db(force=False):
     # Create a table in DB to store user addresses
     cursor.execute('''CREATE TABLE IF NOT EXISTS client_info (
                         user_id INTEGER NOT NULL,
+                        phone_number TEXT,
                         latitude TEXT,
                         longitude TEXT, 
-                        phone_number TEXT,
                         address TEXT
                         ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci '''
                         )
@@ -55,6 +56,7 @@ def init_db(force=False):
     cursor.execute('''CREATE TABLE IF NOT EXISTS pending_orders (
                         id INTEGER AUTO_INCREMENT PRIMARY KEY,
                         user_id INTEGER NOT NULL,
+                        phone_number TEXT,
                         name TEXT NOT NULL,
                         quantity INTEGER NOT NULL,
                         price FLOAT NOT NULL,
@@ -117,13 +119,19 @@ def write_adress(user_id, address):
     stop_connection(conn, cursor)
 
 
-def complete_order(user_id):
+def complete_order(user_id, phone_number):
     '''Add pending order to the real order (once the "End Order" button is pressed by the user)'''
     conn, cursor = start_connection()
-    cursor.execute('''INSERT INTO order_basket (user_id, name, quantity, price, total, ts)
-                      SELECT user_id, name, quantity, price, total, ts FROM pending_orders WHERE user_id = %s''', (user_id, ))
+    
+    # Add user phone number to all their orders
+    cursor.execute('UPDATE pending_orders SET phone_number = %s WHERE user_id = %s', (phone_number, user_id))
+    
+    # Insert order rows from pending to actual table
+    cursor.execute('''INSERT INTO order_basket (user_id, phone_number, name, quantity, price, total, ts)
+                      SELECT user_id, phone_number, name, quantity, price, total, ts FROM pending_orders WHERE user_id = %s''', (user_id, ))
     
     cursor.execute('UPDATE order_basket SET total = quantity * price WHERE user_id = %s ', (user_id, ))
+    
     cursor.execute('DELETE FROM pending_orders WHERE user_id = %s', (user_id, )) # Delete rows from pending table
     conn.commit()
     stop_connection(conn, cursor)
@@ -163,7 +171,7 @@ def select_last(user_id):
 
 
 def count_total(user_id):
-    '''Count and return the total sum fopr all goods in the basket.'''
+    '''Count and return the total sum for all goods in the basket.'''
     conn, cursor = start_connection()
     cursor.execute('UPDATE pending_orders SET total = quantity * price WHERE user_id = %s ', (user_id, ))
     cursor.execute('SELECT SUM(total) FROM pending_orders WHERE user_id = %s', (user_id, ))
