@@ -273,20 +273,39 @@ def show_order_basket(msg):
         total_sum = db_mysql.count_total(user_id=msg.chat.id)
         bot.send_message(msg.chat.id, 'Сумма вашего заказа: {} грн.'.format(total_sum[0]))
 
+
 # End of the order
 @bot.message_handler(content_types=['contact'])
 def end_order(msg):
+    phone_number=msg.contact.phone_number
+    
     keyboard = telebot.types.ReplyKeyboardMarkup()
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(main)
     
-    # Add pending order to the actual orders table
-    db_mysql.complete_order(user_id=msg.chat.id)
+    # Record phone number into DB and Add pending order to the actual orders table
+    db_mysql.write_phone(user_id=msg.chat.id, phone_number=phone_number)
+    db_mysql.complete_order(user_id=msg.chat.id, phone_number=phone_number)
     
-    # Record phone number into DB
-    db_mysql.write_phone(user_id=msg.chat.id, phone_number=msg.contact.phone_number)
     bot.send_message(msg.chat.id, 'Спасибо за то, что воспользовались нашим ботом. Наш менеджер свяжется с вами через пару минут. До скорых встреч!', reply_markup=keyboard)
-    # Add method that deletes orders from the db??
     
     
+# Add possibility to clear the tables in DB
+@bot.message_handler(commands=['new'])
+def clear_tables(msg):
+    keyboard = telebot.types.ReplyKeyboardMarkup()
+    main = telebot.types.KeyboardButton('Главное Меню')
+    keyboard.add(main)
+    
+    if msg.from_user.id == '401482102': # Денис
+        db_mysql.init_db(force=True)
+        bot.send_message(msg.chat.id, 'Вы успешно обновили таблицы в Базе Данных!', reply_markup=keyboard)
+        
+    elif msg.from_user.id == '389802270': # Я
+        db_mysql.init_db(force=True)
+        bot.send_message(msg.chat.id, 'Вы успешно обновили таблицы в Базе Данных!', reply_markup=keyboard)
+    else:
+        bot.send_message(msg.chat.id, 'У вас нет доступа к данной команде!', reply_markup=keyboard)
+        
+        
 bot.polling(none_stop=True)
