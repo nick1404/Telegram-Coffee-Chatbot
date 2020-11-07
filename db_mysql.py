@@ -1,17 +1,14 @@
 import mysql.connector as connection
 import pandas as pd
-from sqlalchemy import create_engine
-import pymysql
+import config
 
 # Create a decorator that connects to the DB and closes the connection once the function is done
 def start_connection():
     # For server use:
-    conn = connection.connect(user='nick', password='usalud35',
-                              host='localhost',
-                              database='orders')
-    # conn = connection.connect(user='nick', password='usalud35',
-    #                           host='mysql-11179-0.cloudclusters.net', port=11179,
-    #                           database='orders')
+    conn = connection.connect(user=config.USER, password=config.PASSWORD,
+                              host=config.HOST,
+                              database=config.DB)
+
     cursor = conn.cursor()
     return conn, cursor
     
@@ -23,6 +20,7 @@ def init_db(force=False):
     conn, cursor = start_connection()
     ''' Check that the required tables exist, else create them'''
     ''':param force: Create tables again'''
+    
     if force:
         cursor.execute('DROP TABLE IF EXISTS order_basket')
         cursor.execute('DROP TABLE IF EXISTS client_info')
@@ -69,7 +67,7 @@ def init_db(force=False):
     stop_connection(conn, cursor)
     
 def add_order(user_id, name, quantity, price):
-    ''' Добавляет единицу товара в таблицу'''
+    '''Add the chosen product into the user basket'''
     conn, cursor = start_connection()
     cursor.execute('INSERT INTO pending_orders (user_id, name, quantity, price) VALUES (%s, %s, %s, %s)', (user_id, name, quantity, price))
     conn.commit()
@@ -154,7 +152,6 @@ def delete_one(user_id):
                                                 total = quantity * price
                                                 WHERE user_id = %s 
                                                 order by id desc limit 1''', (user_id, ))
-    # cursor.execute('''DELETE FROM pending_orders WHERE quantity = 0''')
     conn.commit()
     stop_connection(conn, cursor) 
     
@@ -178,5 +175,3 @@ def count_total(user_id):
     total = cursor.fetchone()
     stop_connection(conn, cursor)
     return total
-
-# Function that deletes user's order from DB after pressed "DONE" ??
