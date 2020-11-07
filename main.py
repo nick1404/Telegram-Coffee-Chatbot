@@ -45,7 +45,6 @@ def choose_coffee(msg):
 
 # Loop through coffee dict to handle the buttons for each coffee
 coffee_regex = "Бразилия Сантос \(250 грн - 1 кг\)|Эфиопия \(250 грн - 1 кг\)|Колумбия Супремо \(300 грн - 1 кг\)|Гондурас \(300 грн - 1 кг\)|Сальвадор \(300 грн - 1 кг\)|Гватемала \(300 грн - 1 кг\)|70 арабики \+ 30 рабусты \(220 грн - 1 кг\)|50 арабики \+ 50 рабусты \(200 грн - 1 кг\)|30 арабики \+ 70 рабусты \(185 грн - 1 кг\)|Бурунди \(350 грн - 1 кг\)" # pylint: disable=anomalous-backslash-in-string
-# coffee_regex = 'Бразилия\sСантос\s\(250\sгрн\s-\s1\sкг\)|Эфиопия\s\(250\sгрн\s-\s1\sкг\)|Колумбия\sСупремо\s\(300\sгрн\s-\s1\sкг\)|Гондурас\s\(300\sгрн\s-\s1\sкг\)|Сальвадор\s\(300\sгрн\s-\s1\sкг\)|Гватемала\s\(300\sгрн\s-\s1\sкг\)|70\sарабики\s\+\s30\sрабусты\s\(220\sгрн\s-\s1\sкг\)|50\sарабики\s\+\s50\sрабусты\s\(200\sгрн\s-\s1\sкг\)|30\sарабики\s\+\s70\sрабусты\s\(180\sгрн\s-\s1\sкг\)|Бурунди\s\(350\sгрн\s-\s1\sкг\)'
                 
 @bot.message_handler(regexp=coffee_regex)
 def coffee_purchase(msg):
@@ -85,8 +84,6 @@ def choose_milk(msg):
 
     bot.send_message(msg.chat.id, 'Вы можете заказать нужное вам молоко нажав на кнопки внизу.', reply_markup=keyboard)
 
-
-# milk_regex = 'Галичина\s\(900гр,\s2,5\%\)\s-\s285\sгрн\/ящик|Селянское\s\(900гр,\s2,5\%\)\s-\s285\sгрн\/ящик|Бариста\sТМ\sГаличина\s\(1л,\s2,5\%\)\s-\s252\sгрн\/ящик|Нежинское\s\(1л,\s2,5%\)\s-\s252\sгрн\/ящик|Молоко\sбезлактозное\sAlpro\s90\sгрн/\л)'
 milk_regex = 'Галичина \(900гр, 2,5\%\) - 285 грн\/ящик|Селянское \(900гр, 2,5\%\) - 285 грн\/ящик|Бариста ТМ Галичина \(1л, 2,5\%\) - 252 грн\/ящик|Нежинское \(1л, 2,5\%\) - 252 грн\/ящик|Безлактозное \"Alpro\" 90 грн\/л' # pylint: disable=anomalous-backslash-in-string
 
 
@@ -140,7 +137,7 @@ def handle_geolocation(msg):
 def handle_adress(msg):
     bot.send_message(msg.chat.id, 'Введите адрес для доставки в формате: "УЛИЦА, НОМЕР ДОМА"')
     
-@bot.message_handler(regexp='.+,?\s?\d+') # Regex for addresses # pylint: disable=anomalous-backslash-in-string
+@bot.message_handler(regexp='.+,?\s?\d+') # Regex for addresses
 def accept_adress(msg):
     keyboard = telebot.types.ReplyKeyboardMarkup()
     end = telebot.types.KeyboardButton('Закончить Заказ', request_contact=True)
@@ -258,7 +255,7 @@ def show_order_basket(msg):
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(end, main)
     
-    # Handle if the basket is empty -- NOT WORKING YET
+    # Handle if the basket is empty
     if not db_mysql.list_order(user_id=msg.chat.id):
         bot.send_message(msg.chat.id, 'Ваша Корзина пустая!', reply_markup=keyboard)
     else:
@@ -297,6 +294,7 @@ def clear_tables(msg):
     main = telebot.types.KeyboardButton('Главное Меню')
     keyboard.add(main)
     
+    # Give admin access to required users
     if msg.from_user.id == '401482102': # Денис
         db_mysql.init_db(force=True)
         bot.send_message(msg.chat.id, 'Вы успешно обновили таблицы в Базе Данных!', reply_markup=keyboard)
